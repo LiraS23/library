@@ -1,6 +1,7 @@
 package com.liras23.library.author;
 
 import jakarta.persistence.Entity;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -22,6 +23,7 @@ public class Author {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @NotBlank(message = "Name cannot be blank")
     private String name;
 
 }
