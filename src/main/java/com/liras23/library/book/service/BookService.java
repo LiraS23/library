@@ -55,8 +55,6 @@ public class BookService {
 
         Book book = bookMapper.toEntity(requestDTO);
         book.setAuthor(author);
-        // O ISBN já é setado pelo mapper, mas caso a lógica mude, garantimos aqui.
-        book.setIsbn(requestDTO.isbn());
 
         Book savedBook = bookRepository.save(book);
         return bookMapper.toResponse(savedBook);
