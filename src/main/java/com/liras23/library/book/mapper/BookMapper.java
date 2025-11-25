@@ -22,7 +22,6 @@ public class BookMapper {
         Book book = new Book();
         book.setTitle(dto.title());
         book.setIsbn(dto.isbn());
-        // A entidade Author será associada no Service
         return book;
     }
 
