@@ -44,7 +44,6 @@ class BookServiceTest {
     @InjectMocks
     private BookService bookService;
 
-    //<editor-fold desc="Find By ID Tests">
     @Test
     @DisplayName("FindById: Should throw ResourceNotFoundException when book is not found")
     void findById_whenBookNotFound_shouldThrowResourceNotFoundException() {
@@ -74,9 +73,7 @@ class BookServiceTest {
         assertNotNull(actualResponse);
         assertEquals(expectedResponse, actualResponse);
     }
-    //</editor-fold>
 
-    //<editor-fold desc="Create Tests">
     @Test
     @DisplayName("Create: Should create a new book successfully")
     void create_shouldCreateNewBook() {
@@ -126,9 +123,7 @@ class BookServiceTest {
         assertThrows(ResourceNotFoundException.class, () -> bookService.create(requestDTO));
         verify(bookRepository, never()).save(any());
     }
-    //</editor-fold>
 
-    //<editor-fold desc="Update Tests">
     @Test
     @DisplayName("Update: Should update book successfully")
     void update_shouldUpdateBook() {
@@ -168,9 +163,7 @@ class BookServiceTest {
         assertThrows(DuplicateResourceException.class, () -> bookService.update(existingBook.getId(), requestDTO));
         verify(bookRepository, never()).save(any());
     }
-    //</editor-fold>
 
-    //<editor-fold desc="Delete Tests">
     @Test
     @DisplayName("Delete: Should delete book successfully when book exists")
     void delete_whenBookExists_shouldDeleteBook() {
@@ -198,9 +191,7 @@ class BookServiceTest {
         assertThrows(ResourceNotFoundException.class, () -> bookService.delete(bookId));
         verify(bookRepository, never()).deleteById(any());
     }
-    //</editor-fold>
 
-    //<editor-fold desc="Find All Tests">
     @Test
     @DisplayName("FindAll: Should return a paginated list of books when no title is provided")
     void findAll_whenNoTitleProvided_shouldReturnAllBooks() {
@@ -243,5 +234,4 @@ class BookServiceTest {
         verify(bookRepository, never()).findAll(pageable);
         verify(bookRepository, times(1)).findByTitleContainingIgnoreCase(titleFilter, pageable);
     }
-    //</editor-fold>
 }
