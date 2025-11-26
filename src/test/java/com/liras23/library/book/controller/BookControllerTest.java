@@ -53,10 +53,8 @@ class BookControllerTest {
     @Test
     @DisplayName("Create: Should create a new book and return 201 Created")
     void create_whenValidData_shouldReturnCreated() throws Exception {
-        // Given
         BookRequestDTO requestDTO = new BookRequestDTO("The Hobbit", existingAuthor.getId(), "978-0345339683");
 
-        // When & Then
         mockMvc.perform(post(API_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDTO)))
@@ -67,12 +65,22 @@ class BookControllerTest {
     }
 
     @Test
+    @DisplayName("Create: Should return 400 Bad Request for invalid data (blank title)")
+    void create_whenTitleIsBlank_shouldReturnBadRequest() throws Exception {
+        BookRequestDTO requestDTO = new BookRequestDTO("", existingAuthor.getId(), "978-0345339683");
+
+        mockMvc.perform(post(API_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDTO)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.title").exists());
+    }
+
+    @Test
     @DisplayName("Create: Should return 404 Not Found when author does not exist")
     void create_whenAuthorNotFound_shouldReturnNotFound() throws Exception {
-        // Given
         BookRequestDTO requestDTO = new BookRequestDTO("The Hobbit", UUID.randomUUID(), "978-0345339683");
 
-        // When & Then
         mockMvc.perform(post(API_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDTO)))
@@ -82,11 +90,9 @@ class BookControllerTest {
     @Test
     @DisplayName("Create: Should return 409 Conflict when ISBN already exists")
     void create_whenIsbnExists_shouldReturnConflict() throws Exception {
-        // Given
         bookRepository.save(new Book(null, "Existing Book", existingAuthor, "978-0345339683"));
         BookRequestDTO requestDTO = new BookRequestDTO("The Hobbit", existingAuthor.getId(), "978-0345339683");
 
-        // When & Then
         mockMvc.perform(post(API_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDTO)))
@@ -96,10 +102,8 @@ class BookControllerTest {
     @Test
     @DisplayName("FindById: Should return a book and 200 OK when ID exists")
     void findById_whenIdExists_shouldReturnBook() throws Exception {
-        // Given
         Book book = bookRepository.save(new Book(null, "The Silmarillion", existingAuthor, "978-0618391110"));
 
-        // When & Then
         mockMvc.perform(get(API_URL + "/{id}", book.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(book.getId().toString()))
@@ -109,7 +113,6 @@ class BookControllerTest {
     @Test
     @DisplayName("FindById: Should return 404 Not Found when ID does not exist")
     void findById_whenIdDoesNotExist_shouldReturnNotFound() throws Exception {
-        // When & Then
         mockMvc.perform(get(API_URL + "/{id}", UUID.randomUUID()))
                 .andExpect(status().isNotFound());
     }
@@ -117,45 +120,52 @@ class BookControllerTest {
     @Test
     @DisplayName("FindAll: Should return a paginated list of books")
     void findAll_shouldReturnPaginatedList() throws Exception {
-        // Given
-        bookRepository.save(new Book(null, "Book A", existingAuthor, "1111111111"));
-        bookRepository.save(new Book(null, "Book B", existingAuthor, "2222222222"));
+        bookRepository.save(new Book(null, "The Lord of the Rings", existingAuthor, "978-0618640157"));
+        bookRepository.save(new Book(null, "The Hobbit", existingAuthor, "978-0345339683"));
 
-        // When & Then
         mockMvc.perform(get(API_URL)
                         .param("page", "0")
                         .param("size", "1")
                         .param("sort", "title,asc"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content", hasSize(1)))
-                .andExpect(jsonPath("$.content[0].title", is("Book A")))
+                .andExpect(jsonPath("$.content[0].title", is("The Hobbit")))
                 .andExpect(jsonPath("$.totalPages", is(2)))
                 .andExpect(jsonPath("$.totalElements", is(2)));
     }
 
     @Test
+    @DisplayName("FindAll: Should return a filtered list when title parameter is provided")
+    void findAll_whenTitleIsProvided_shouldReturnFilteredList() throws Exception {
+        bookRepository.save(new Book(null, "The Lord of the Rings", existingAuthor, "978-0618640157"));
+        bookRepository.save(new Book(null, "The Hobbit", existingAuthor, "978-0345339683"));
+
+        mockMvc.perform(get(API_URL)
+                        .param("title", "Hobbit"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.content[0].title", is("The Hobbit")));
+    }
+
+    @Test
     @DisplayName("Update: Should update a book and return 200 OK when ID exists")
     void update_whenIdExists_shouldUpdateBook() throws Exception {
-        // Given
-        Book book = bookRepository.save(new Book(null, "Old Title", existingAuthor, "3333333333"));
-        BookRequestDTO requestDTO = new BookRequestDTO("New Title", existingAuthor.getId(), "4444444444");
+        Book book = bookRepository.save(new Book(null, "Old Title", existingAuthor, "978-0000000111"));
+        BookRequestDTO requestDTO = new BookRequestDTO("New Title", existingAuthor.getId(), "978-0000000222");
 
-        // When & Then
         mockMvc.perform(put(API_URL + "/{id}", book.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDTO)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title").value("New Title"))
-                .andExpect(jsonPath("$.isbn").value("4444444444"));
+                .andExpect(jsonPath("$.isbn").value("978-0000000222"));
     }
 
     @Test
     @DisplayName("Update: Should return 404 Not Found when ID does not exist")
     void update_whenIdDoesNotExist_shouldReturnNotFound() throws Exception {
-        // Given
-        BookRequestDTO requestDTO = new BookRequestDTO("New Title", existingAuthor.getId(), "4444444444");
+        BookRequestDTO requestDTO = new BookRequestDTO("New Title", existingAuthor.getId(), "978-0000000222");
 
-        // When & Then
         mockMvc.perform(put(API_URL + "/{id}", UUID.randomUUID())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDTO)))
@@ -163,12 +173,35 @@ class BookControllerTest {
     }
 
     @Test
+    @DisplayName("Update: Should return 404 Not Found when Author ID does not exist")
+    void update_whenAuthorIdDoesNotExist_shouldReturnNotFound() throws Exception {
+        Book book = bookRepository.save(new Book(null, "Old Title", existingAuthor, "978-0000000111"));
+        BookRequestDTO requestDTO = new BookRequestDTO("New Title", UUID.randomUUID(), "978-0000000222");
+
+        mockMvc.perform(put(API_URL + "/{id}", book.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDTO)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("Update: Should return 409 Conflict when ISBN already belongs to another book")
+    void update_whenIsbnExistsInAnotherBook_shouldReturnConflict() throws Exception {
+        Book bookToUpdate = bookRepository.save(new Book(null, "Original Book", existingAuthor, "978-0000000111"));
+        Book otherBook = bookRepository.save(new Book(null, "Other Book", existingAuthor, "978-0000000222"));
+        BookRequestDTO requestDTO = new BookRequestDTO("Updated Title", existingAuthor.getId(), otherBook.getIsbn());
+
+        mockMvc.perform(put(API_URL + "/{id}", bookToUpdate.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDTO)))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
     @DisplayName("Delete: Should delete a book and return 204 No Content when ID exists")
     void delete_whenIdExists_shouldDeleteBook() throws Exception {
-        // Given
-        Book book = bookRepository.save(new Book(null, "To be deleted", existingAuthor, "5555555555"));
+        Book book = bookRepository.save(new Book(null, "To be deleted", existingAuthor, "978-0000000555"));
 
-        // When & Then
         mockMvc.perform(delete(API_URL + "/{id}", book.getId()))
                 .andExpect(status().isNoContent());
 
@@ -178,7 +211,6 @@ class BookControllerTest {
     @Test
     @DisplayName("Delete: Should return 404 Not Found when ID does not exist")
     void delete_whenIdDoesNotExist_shouldReturnNotFound() throws Exception {
-        // When & Then
         mockMvc.perform(delete(API_URL + "/{id}", UUID.randomUUID()))
                 .andExpect(status().isNotFound());
     }
